@@ -17,11 +17,14 @@ class MainViewController : UIViewController, AVCaptureMetadataOutputObjectsDeleg
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
     
+    
+    
     var blurEffectView : UIVisualEffectView!
     let backgroundImage = UIImageView(frame: UIScreen.main.bounds)
     var backgroundOpenGif = UIImageView(frame: UIScreen.main.bounds)
+    var backgroundCloseGif = UIImageView(frame: UIScreen.main.bounds)
     var blurEffect = UIBlurEffect(style: UIBlurEffectStyle.light)
-    let test : UIButton = UIButton(frame :CGRect(x: 160, y: 428, width: 54, height: 30))
+    let cameraButton : UIButton = UIButton(frame :CGRect(x: 160, y: 428, width: 54, height: 30))
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -75,37 +78,64 @@ class MainViewController : UIViewController, AVCaptureMetadataOutputObjectsDeleg
         backgroundOpenGif.image = UIImage.animatedImage(with: [img1!,img2!,img3!,img4!,img5!,img6!], duration: 0.25)
         backgroundOpenGif.alpha = 0.6
 
+        backgroundCloseGif.image = UIImage.animatedImage(with: [img6!,img5!,img4!,img3!,img2!,img1!], duration: 0.25)
+        backgroundCloseGif.alpha = 0.6
+        
         blurEffectView = UIVisualEffectView(effect: blurEffect)
         blurEffectView.frame = view.bounds
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
         
-        test.setTitle("lol", for: .normal)
-        test.backgroundColor = UIColor.blue
-        test.addTarget(self, action: #selector(MainViewController.buttonClicked), for: .touchUpInside)
+        cameraButton.setTitle("lol", for: .normal)
+        cameraButton.backgroundColor = UIColor.blue
+       // cameraButton.addTarget(self, action: #selector(MainViewController.swipeUp(gesture: swipeGesture)), for: .touchUpInside)
         
         view.layer.addSublayer(previewLayer);
         captureSession.startRunning();
         
+        let swipeGesture = UISwipeGestureRecognizer(target: self, action: #selector(MainViewController.swipeUp))
+        swipeGesture.direction = UISwipeGestureRecognizerDirection.up
+        view.addGestureRecognizer(swipeGesture)
+        
         view.addSubview(blurEffectView)
         view.addSubview(backgroundImage)
-        view.addSubview(test)
+        //view.addSubview(cameraButton)
        
     }
     
     
     
-    func buttonClicked(sender: UIButton!) {
+    func swipeUp(gesture: UISwipeGestureRecognizer) {
+        
+        gesture.direction = UISwipeGestureRecognizerDirection.down
+        gesture.removeTarget(self, action: #selector(MainViewController.swipeUp))
+        gesture.addTarget(self, action:  #selector(MainViewController.swipeDown))
+        
         backgroundImage.removeFromSuperview()
         view.addSubview(backgroundOpenGif)
         backgroundOpenGif.startAnimating()
-        endAnimation()
+        endAnimation(gifView: backgroundOpenGif, close: false)
         blurEffectView.removeFromSuperview()
+        
     }
     
-    func endAnimation() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.23) {
-            self.backgroundOpenGif.removeFromSuperview()
+    func swipeDown(gesture: UISwipeGestureRecognizer) {
+        view.addSubview(blurEffectView)
+        view.addSubview(backgroundCloseGif)
+        backgroundCloseGif.startAnimating()
+        endAnimation(gifView: backgroundCloseGif, close: true)
+        gesture.direction = UISwipeGestureRecognizerDirection.up
+        gesture.removeTarget(self, action: #selector(MainViewController.swipeDown))
+        gesture.addTarget(self, action:  #selector(MainViewController.swipeUp))
+        
+    }
+    
+    func endAnimation(gifView: UIImageView, close: Bool) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            gifView.removeFromSuperview()
+            if close {
+                self.view.addSubview(self.backgroundImage)
+            }
         }
     }
     
